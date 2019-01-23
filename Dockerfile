@@ -1,5 +1,5 @@
 FROM phusion/baseimage:0.10.0
-LABEL maintainer="United Classifieds <unitedclassifiedsapps@gmail.com>"
+LABEL maintainer="Yevhen Samoilov <samoilov.yevhen@gmail.com>"
 
 CMD ["/sbin/my_init"]
 
@@ -7,9 +7,10 @@ ENV LC_ALL "en_US.UTF-8"
 ENV LANGUAGE "en_US.UTF-8"
 ENV LANG "en_US.UTF-8"
 
-ENV VERSION_SDK_TOOLS "4333796"
-ENV VERSION_BUILD_TOOLS "27.0.3"
-ENV VERSION_TARGET_SDK "27"
+ENV ANDROID_COMPILE_SDK="27" \
+ANDROID_BUILD_TOOLS="28.0.3" \
+ANDROID_SDK_TOOLS_REV="4333796" \
+ANDROID_CMAKE_REV="3.6.4111459"
 
 ENV ANDROID_HOME "/sdk"
 
@@ -19,27 +20,45 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV HOME "/root"
 
 RUN apt-add-repository ppa:brightbox/ruby-ng
-RUN apt-get update
-RUN apt-get -y install --no-install-recommends \
-    curl \
-    openjdk-8-jdk \
-    unzip \
-    zip \
-    git \
-    ruby2.4 \
-    ruby2.4-dev \
-    build-essential \
-    file \
-    ssh
 
-ADD https://dl.google.com/android/repository/sdk-tools-linux-${VERSION_SDK_TOOLS}.zip /tools.zip
-RUN unzip /tools.zip -d /sdk && rm -rf /tools.zip
+RUN apt-get update && \
+apt-get install -y file && \
+rm -rf /var/lib/apt/lists/*
 
-RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
+RUN apt-get install curl \
+        python \
+        openssh-client \
+        git \
+    && curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    ln -s /lib /lib64 && \
+    gcloud config set core/disable_usage_reporting true && \
+    gcloud config set component_manager/disable_update_check true && \
+    gcloud config set metrics/environment github_docker_image && \
+    gcloud --version
+    
+RUN mkdir -p ${ANDROID_HOME} \
+&& wget --quiet --output-document=${ANDROID_HOME}/android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS_REV}.zip \
+&& unzip -qq ${ANDROID_HOME}/android-sdk.zip -d ${ANDROID_HOME} \
+&& rm ${ANDROID_HOME}/android-sdk.zip \
+&& mkdir -p $HOME/.android \
+&& echo 'count=0' > $HOME/.android/repositories.cfg
 
-RUN mkdir -p $HOME/.android && touch $HOME/.android/repositories.cfg
-RUN ${ANDROID_HOME}/tools/bin/sdkmanager "platform-tools" "tools" "platforms;android-${VERSION_TARGET_SDK}" "build-tools;${VERSION_BUILD_TOOLS}"
-RUN ${ANDROID_HOME}/tools/bin/sdkmanager "extras;android;m2repository" "extras;google;google_play_services" "extras;google;m2repository"
+RUN yes | sdkmanager --licenses > /dev/null \ 
+&& yes | sdkmanager --licenses \
+ && yes | sdkmanager --update \
+&& yes | sdkmanager 'tools' \
+&& yes | sdkmanager 'platform-tools' \
+&& yes | sdkmanager 'build-tools;'$ANDROID_BUILD_TOOLS \
+&& yes | sdkmanager 'platforms;android-'$ANDROID_COMPILE_SDK \
+&& yes | sdkmanager 'extras;android;m2repository' \
+&& yes | sdkmanager 'extras;google;google_play_services' \
+&& yes | sdkmanager 'extras;google;m2repository' \
+&& yes | sdkmanager --licenses
+
+RUN yes | sdkmanager 'cmake;'$ANDROID_CMAKE_REV \
+&& yes | sdkmanager 'ndk-bundle' 
 
 RUN gem install fastlane
 
