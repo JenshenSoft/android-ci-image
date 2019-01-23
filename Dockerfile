@@ -1,40 +1,43 @@
-FROM openjdk:8-jdk
+FROM phusion/baseimage:0.10.0
 LABEL maintainer="Yevhen Samoilov <samoilov.yevhen@gmail.com>"
+CMD ["/sbin/my_init"]
 
-ENV ANDROID_COMPILE_SDK="27" \
-ANDROID_BUILD_TOOLS="28.0.3" \
-ANDROID_SDK_TOOLS_REV="4333796" \
-ANDROID_CMAKE_REV="3.6.4111459"
+ENV LC_ALL "en_US.UTF-8"
+ENV LANGUAGE "en_US.UTF-8"
+ENV LANG "en_US.UTF-8"
 
-ENV CLOUD_SDK_VERSION 183.0.0
+ENV ANDROID_SDK_TOOLS_REV "4333796"
+ENV ANDROID_BUILD_TOOLS "28.0.3"
+ENV ANDROID_COMPILE_SDK "28"
+ENV ANDROID_CMAKE_REV "3.6.4111459"
 
-ENV PATH /google-cloud-sdk/bin:$PATH
-ENV ANDROID_HOME=/opt/android-sdk-linux
-ENV PATH ${PATH}:${ANDROID_HOME}/platform-tools/:${ANDROID_NDK_HOME}:${ANDROID_HOME}/ndk-bundle:${ANDROID_HOME}/tools/bin/
+ENV ANDROID_HOME "/sdk"
 
-RUN apt-get update && \
-apt-get install -y file && \
-rm -rf /var/lib/apt/lists/*
+ENV PATH "$PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools"
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get install curl \
-        python \
-        openssh-client \
-        git \
-    && curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    ln -s /lib /lib64 && \
-    gcloud config set core/disable_usage_reporting true && \
-    gcloud config set component_manager/disable_update_check true && \
-    gcloud config set metrics/environment github_docker_image && \
-    gcloud --version
-    
-RUN mkdir -p ${ANDROID_HOME} \
-&& wget --quiet --output-document=${ANDROID_HOME}/android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS_REV}.zip \
-&& unzip -qq ${ANDROID_HOME}/android-sdk.zip -d ${ANDROID_HOME} \
-&& rm ${ANDROID_HOME}/android-sdk.zip \
-&& mkdir -p $HOME/.android \
-&& echo 'count=0' > $HOME/.android/repositories.cfg
+ENV HOME "/root"
+
+RUN apt-add-repository ppa:brightbox/ruby-ng
+RUN apt-get update
+RUN apt-get -y install --no-install-recommends \
+curl \
+openjdk-8-jdk \
+unzip \
+zip \
+git \
+ruby2.4 \
+ruby2.4-dev \
+build-essential \
+file \
+ssh
+
+ADD https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS_REV}.zip /tools.zip
+RUN unzip /tools.zip -d /sdk && rm -rf /tools.zip
+
+RUN mkdir -p $HOME/.android && touch $HOME/.android/repositories.cfg
+RUN ${ANDROID_HOME}/tools/bin/sdkmanager "platform-tools" "tools" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS}"
+RUN ${ANDROID_HOME}/tools/bin/sdkmanager "extras;android;m2repository" "extras;google;google_play_services" "extras;google;m2repository"
 
 RUN yes | sdkmanager --licenses > /dev/null \ 
 && yes | sdkmanager --licenses \
@@ -50,9 +53,6 @@ RUN yes | sdkmanager --licenses > /dev/null \
 
 RUN yes | sdkmanager 'cmake;'$ANDROID_CMAKE_REV \
 && yes | sdkmanager 'ndk-bundle' 
-
-
-RUN gcloud init
 
 RUN gem install fastlane
 
