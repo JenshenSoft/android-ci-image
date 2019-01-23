@@ -38,18 +38,7 @@ RUN unzip /tools.zip -d /sdk && rm -rf /tools.zip
 RUN mkdir -p $HOME/.android && touch $HOME/.android/repositories.cfg
 RUN ${ANDROID_HOME}/tools/bin/sdkmanager "platform-tools" "tools" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS}"
 RUN ${ANDROID_HOME}/tools/bin/sdkmanager "extras;android;m2repository" "extras;google;google_play_services" "extras;google;m2repository"
-
-RUN yes | sdkmanager --licenses > /dev/null \ 
-&& yes | sdkmanager --licenses \
- && yes | sdkmanager --update \
-&& yes | sdkmanager 'tools' \
-&& yes | sdkmanager 'platform-tools' \
-&& yes | sdkmanager 'build-tools;'$ANDROID_BUILD_TOOLS \
-&& yes | sdkmanager 'platforms;android-'$ANDROID_COMPILE_SDK \
-&& yes | sdkmanager 'extras;android;m2repository' \
-&& yes | sdkmanager 'extras;google;google_play_services' \
-&& yes | sdkmanager 'extras;google;m2repository' \
-&& yes | sdkmanager --licenses
+RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
 
 RUN yes | sdkmanager 'cmake;'$ANDROID_CMAKE_REV \
 && yes | sdkmanager 'ndk-bundle' 
