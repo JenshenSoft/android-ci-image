@@ -1,25 +1,16 @@
-FROM phusion/baseimage:0.10.0
+FROM openjdk:8-jdk
 LABEL maintainer="Yevhen Samoilov <samoilov.yevhen@gmail.com>"
-
-CMD ["/sbin/my_init"]
-
-ENV LC_ALL "en_US.UTF-8"
-ENV LANGUAGE "en_US.UTF-8"
-ENV LANG "en_US.UTF-8"
 
 ENV ANDROID_COMPILE_SDK="27" \
 ANDROID_BUILD_TOOLS="28.0.3" \
 ANDROID_SDK_TOOLS_REV="4333796" \
 ANDROID_CMAKE_REV="3.6.4111459"
 
-ENV ANDROID_HOME "/sdk"
+ENV CLOUD_SDK_VERSION 183.0.0
 
-ENV PATH "$PATH:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools"
-ENV DEBIAN_FRONTEND noninteractive
-
-ENV HOME "/root"
-
-RUN apt-add-repository ppa:brightbox/ruby-ng
+ENV PATH /google-cloud-sdk/bin:$PATH
+ENV ANDROID_HOME=/opt/android-sdk-linux
+ENV PATH ${PATH}:${ANDROID_HOME}/platform-tools/:${ANDROID_NDK_HOME}:${ANDROID_HOME}/ndk-bundle:${ANDROID_HOME}/tools/bin/
 
 RUN apt-get update && \
 apt-get install -y file && \
@@ -59,6 +50,9 @@ RUN yes | sdkmanager --licenses > /dev/null \
 
 RUN yes | sdkmanager 'cmake;'$ANDROID_CMAKE_REV \
 && yes | sdkmanager 'ndk-bundle' 
+
+
+RUN gcloud init
 
 RUN gem install fastlane
 
