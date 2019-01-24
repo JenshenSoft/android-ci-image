@@ -43,6 +43,7 @@ RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
 RUN yes | sdkmanager 'cmake;'$ANDROID_CMAKE_REV \
 && yes | sdkmanager 'ndk-bundle' 
 
+RUN gem install bundler --pre
 RUN gem install fastlane -NV
 
 ADD id_rsa $HOME/.ssh/id_rsa
