@@ -37,6 +37,8 @@ build:
 
 
 update:
+1.3 = new version
+ 
  $docker build -t jenshen1992/android-ci:1.3 .
  $docker images
  $docker tag 7925878baad1 jenshen1992/android-ci:1.3
