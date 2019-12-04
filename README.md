@@ -5,7 +5,7 @@ This Docker image contains the Android SDK and most common packages necessary fo
 Use generated public key as gitlab deploy key
 
 ```
-docker run -it --rm jenshen1992/android-ci
+docker run -it --rm jenshen1992/android-ci:1.7
 cat ~/.ssh/id_rsa
 ```
 
