@@ -37,8 +37,11 @@ build:
 
 
 update:
- $docker build -t jenshen1992/android-ci:1.3 .
+ $docker build --no-cache -t jenshen1992/android-ci:1.3 .
+ 
  $docker images
+ 
  $docker tag 7925878baad1 jenshen1992/android-ci:1.3
+ 
  $docker push jenshen1992/android-ci:1.3
  
